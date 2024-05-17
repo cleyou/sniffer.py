@@ -1,2 +1,2 @@
 # sniffer.py
-a very basic sniffer network 
+a very basic  network sniffer
