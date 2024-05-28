@@ -33,6 +33,18 @@ def main():
                 src_port, dest_port, size = struct.unpack('! H H 2x H', dataFrame[14:22])
                 print(f'\t>> UDP : Source Port = {src_port}, Dest Port = {dest_port}, size = {size}')
 
+
+            if src_port == 53 or dest_port == 53:  # DNS for UDP
+                    dns_header = dataFrame[42:54]
+                    transaction_id, flags, questions, answers, authority, additional = struct.unpack('!HHHHHH', dns_header)
+                    print(f'\t>>> DNS Records :')
+                    print(f"\t\t- ID: {transaction_id}")
+                    print(f"\t\t- flags: {flags} (Binary: {flags:016b})")
+                    print(f"\t\t- Number of questions: {questions}")
+                    print(f"\t\t- Number of answers: {answers}")
+                    print(f"\t\t- Number of authority records: {authority}")
+                    print(f"\t\t- Number of additional records: {additional}")
+
             elif protocol == 6:  # TCP
                 src_port, dest_port, sequence, ackn, orf = struct.unpack('! H H L L H', dataFrame[14:28])
                 offset = ((orf >> 12) * 4)
@@ -52,9 +64,18 @@ def main():
                 for portion in portion:
                     print(f'\t\t\t{":".join([f"{b:02X}" for b in portion])}')
 
-                if dest_port == 53:  # DNS
-                    dns = ":".join([f'{b:02}' for b in dataFrame[:12]])
-                    print(f'\tDNS : {dns}')
+                if src_port == 53 or dest_port == 53:  # DNS for TCP
+                    length = struct.unpack('!H', dataFrame[48:50])[0]
+                    dns_data = dataFrame[50:50 + length]
+                    transaction_id, flags, questions, answers, authority, additional = struct.unpack('!HHHHHH', dns_data[:12])
+                    print(f"\t>>> DNS Records (TCP):")
+                    print(f"\t\t- Transaction ID: {transaction_id}")
+                    print(f"\t\t- Flags: {flags} (Binary: {flags:016b})")
+                    print(f"\t\t- Number of Questions: {questions}")
+                    print(f"\t\t- Number of Answers: {answers}")
+                    print(f"\t\t- Number of Authority Records: {authority}")
+                    print(f"\t\t- Number of Additional Records: {additional}")
+           
 
             elif protocol == 1:  # ICMP
                 # this header is 8 octets but the 4 last are only used for ping
